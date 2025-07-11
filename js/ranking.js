@@ -12,17 +12,9 @@ class RankingManager {
      * @returns {Promise<Array>} ランキングデータ
      */
     async getRanking() {
-        try {
-            // 真の共有ランキングから取得
-            const ranking = await this.sharedRanking.getSharedRanking();
-            console.log('デバッグ: RankingManager.getRanking()で取得したデータ:', ranking);
-            return ranking.filter(record => SecurityUtils.validateRecord(record));
-        } catch (error) {
-            console.warn('共有ランキング取得エラー:', error);
-            const fallback = this._getLocalFallback();
-            console.log('デバッグ: フォールバックデータ:', fallback);
-            return fallback;
-        }
+        // デモ削除のため一時的に常に空配列を返す
+        console.log('デバッグ: デモデータ削除のため空配列を返します');
+        return [];
     }
 
     /**
