@@ -25,6 +25,7 @@ class Game {
      * ゲーム初期化
      */
     async init() {
+        console.log('DEBUG: ゲーム初期化開始 - バージョン 2.0');
         this._setupGameArea();
         
         // 非同期でランキング読み込み
@@ -41,7 +42,7 @@ class Game {
         // グローバル参照設定（UIManagerのコールバック用）
         window.game = this;
         
-        console.log('ゲーム初期化完了');
+        console.log('ゲーム初期化完了 - バージョン 2.0');
     }
 
     /**
