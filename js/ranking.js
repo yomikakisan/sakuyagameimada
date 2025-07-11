@@ -178,18 +178,13 @@ class RankingManager {
      */
     async getDisplayRanking() {
         const ranking = await this.getRanking();
-        console.log('デバッグ: getDisplayRanking()で処理するデータ:', ranking);
-        
-        const displayRanking = ranking.slice(0, CONFIG.RANKING.DISPLAY_COUNT).map((record, index) => ({
+        return ranking.slice(0, CONFIG.RANKING.DISPLAY_COUNT).map((record, index) => ({
             ...record,
             rank: index + 1,
             medal: MEDALS[index] || '',
             safeName: SecurityUtils.escapeHtml(record.name),
             safeTimestamp: SecurityUtils.escapeHtml(record.timestamp)
         }));
-        
-        console.log('デバッグ: 最終的な表示用ランキング:', displayRanking);
-        return displayRanking;
     }
 }
 
