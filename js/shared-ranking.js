@@ -121,14 +121,23 @@ class TrulySharedRanking {
         try {
             // ranking.json ファイルを探す
             const files = Object.keys(gist.files);
+            console.log('デバッグ: Gistファイル一覧:', files);
             const rankingFile = files.find(name => name.includes('ranking'));
+            console.log('デバッグ: 見つかったランキングファイル:', rankingFile);
             
             if (rankingFile && gist.files[rankingFile]) {
                 const content = gist.files[rankingFile].content;
+                console.log('デバッグ: Gistファイルの内容:', content);
                 const data = JSON.parse(content);
                 
                 if (Array.isArray(data)) {
-                    return data.filter(record => SecurityUtils.validateRecord(record));
+                    // デモデータを強制的に除外
+                    const filteredData = data.filter(record => {
+                        const isDemoData = ['ニンジャマスター', 'スピードキング', 'リフレックス', 'サクヤファン', '反応の達人', 'クイックドロー', '瞬速の忍'].includes(record.name);
+                        return !isDemoData && SecurityUtils.validateRecord(record);
+                    });
+                    console.log('デバッグ: デモデータ除去後:', filteredData);
+                    return filteredData;
                 }
             }
             

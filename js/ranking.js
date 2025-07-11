@@ -15,10 +15,13 @@ class RankingManager {
         try {
             // 真の共有ランキングから取得
             const ranking = await this.sharedRanking.getSharedRanking();
+            console.log('デバッグ: RankingManager.getRanking()で取得したデータ:', ranking);
             return ranking.filter(record => SecurityUtils.validateRecord(record));
         } catch (error) {
             console.warn('共有ランキング取得エラー:', error);
-            return this._getLocalFallback();
+            const fallback = this._getLocalFallback();
+            console.log('デバッグ: フォールバックデータ:', fallback);
+            return fallback;
         }
     }
 
@@ -178,13 +181,18 @@ class RankingManager {
      */
     async getDisplayRanking() {
         const ranking = await this.getRanking();
-        return ranking.slice(0, CONFIG.RANKING.DISPLAY_COUNT).map((record, index) => ({
+        console.log('デバッグ: getDisplayRanking()で処理するデータ:', ranking);
+        
+        const displayRanking = ranking.slice(0, CONFIG.RANKING.DISPLAY_COUNT).map((record, index) => ({
             ...record,
             rank: index + 1,
             medal: MEDALS[index] || '',
             safeName: SecurityUtils.escapeHtml(record.name),
             safeTimestamp: SecurityUtils.escapeHtml(record.timestamp)
         }));
+        
+        console.log('デバッグ: 最終的な表示用ランキング:', displayRanking);
+        return displayRanking;
     }
 }
 
