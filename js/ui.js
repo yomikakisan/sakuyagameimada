@@ -186,16 +186,12 @@ class UIManager {
     renderRanking(displayRanking) {
         if (!this.elements.ranking) return;
 
-        if (displayRanking.length === 0) {
-            this.elements.ranking.innerHTML = '<p>記録がありません</p>';
-            return;
-        }
+        console.log('デバッグ: renderRanking呼び出し、データ:', displayRanking);
 
-        const listItems = displayRanking.map(record => 
-            `<li>${record.medal} ${record.safeName} - ${record.score}ms <small>(${record.safeTimestamp})</small></li>`
-        ).join('');
-
-        this.elements.ranking.innerHTML = `<ol>${listItems}</ol>`;
+        // 強制的に空のランキングを表示
+        this.elements.ranking.innerHTML = '<p>記録がありません</p>';
+        console.log('デバッグ: 強制的に空のランキングを表示しました');
+        return;
     }
 
     /**
