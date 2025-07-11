@@ -12,9 +12,14 @@ class RankingManager {
      * @returns {Promise<Array>} ランキングデータ
      */
     async getRanking() {
-        // デモ削除のため一時的に常に空配列を返す
-        console.log('デバッグ: デモデータ削除のため空配列を返します');
-        return [];
+        try {
+            // 真の共有ランキングから取得
+            const ranking = await this.sharedRanking.getSharedRanking();
+            return ranking.filter(record => SecurityUtils.validateRecord(record));
+        } catch (error) {
+            console.warn('共有ランキング取得エラー:', error);
+            return this._getLocalFallback();
+        }
     }
 
     /**
