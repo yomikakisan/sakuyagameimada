@@ -4,8 +4,8 @@
  */
 class TrulySharedRanking {
     constructor() {
-        // 公開GitHub Gist ID（読み取り専用）
-        this.gistId = '6b8c1234567890abcdef1234567890ab'; // 実際のGist ID（後で設定）
+        // 公開GitHub Gist ID
+        this.gistId = 'c791657df064e4297dc694938d1b6021';
         this.gistUrl = `https://api.github.com/gists/${this.gistId}`;
         this.fallbackKey = 'imadaSharedRanking';
         this.lastUpdate = null;
@@ -112,24 +112,20 @@ class TrulySharedRanking {
      */
     _extractRankingFromGist(gist) {
         try {
-            // ranking.json ファイルを探す
+            // Gistファイルを探す（sakuya-game-ranking.json）
             const files = Object.keys(gist.files);
-            console.log('デバッグ: Gistファイル一覧:', files);
-            const rankingFile = files.find(name => name.includes('ranking'));
-            console.log('デバッグ: 見つかったランキングファイル:', rankingFile);
+            const rankingFile = files.find(name => name.includes('sakuya-game-ranking') || name.includes('ranking'));
             
             if (rankingFile && gist.files[rankingFile]) {
                 const content = gist.files[rankingFile].content;
-                console.log('デバッグ: Gistファイルの内容:', content);
                 const data = JSON.parse(content);
                 
                 if (Array.isArray(data)) {
-                    // デモデータを強制的に除外
+                    // デモデータを除外してフィルタリング
                     const filteredData = data.filter(record => {
                         const isDemoData = ['ニンジャマスター', 'スピードキング', 'リフレックス', 'サクヤファン', '反応の達人', 'クイックドロー', '瞬速の忍'].includes(record.name);
                         return !isDemoData && SecurityUtils.validateRecord(record);
                     });
-                    console.log('デバッグ: デモデータ除去後:', filteredData);
                     return filteredData;
                 }
             }
