@@ -9,7 +9,7 @@ class TrulySharedRanking {
         this.gistUrl = `https://api.github.com/gists/${this.gistId}`;
         this.fallbackKey = 'imadaSharedRanking';
         this.lastUpdate = null;
-        this.cacheTimeout = 30000; // 30秒キャッシュ
+        this.cacheTimeout = 300000; // 5分キャッシュ（テスト用）
     }
 
     /**
@@ -163,8 +163,16 @@ class TrulySharedRanking {
      * @returns {boolean} キャッシュが有効かどうか
      */
     _isCacheValid() {
-        return this.lastUpdate && 
+        const isValid = this.lastUpdate && 
                (Date.now() - this.lastUpdate) < this.cacheTimeout;
+        console.log('キャッシュ有効性:', {
+            lastUpdate: this.lastUpdate,
+            now: Date.now(),
+            diff: this.lastUpdate ? (Date.now() - this.lastUpdate) : 'null',
+            timeout: this.cacheTimeout,
+            isValid: isValid
+        });
+        return isValid;
     }
 
     /**
@@ -231,8 +239,17 @@ class TrulySharedRanking {
      */
     _saveToCache(data) {
         try {
+            console.log('=== _saveToCache開始 ===');
+            console.log('保存するデータ:', data);
+            console.log('保存キー:', this.fallbackKey);
+            
             localStorage.setItem(this.fallbackKey, JSON.stringify(data));
             this.lastUpdate = Date.now();
+            
+            // 保存後の確認
+            const saved = localStorage.getItem(this.fallbackKey);
+            console.log('保存後の確認:', saved);
+            console.log('=== _saveToCache完了 ===');
         } catch (error) {
             console.warn('キャッシュ保存エラー:', error);
         }
