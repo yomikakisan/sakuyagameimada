@@ -261,13 +261,12 @@ class Game {
      * デモデータクリア
      */
     _clearDemoData() {
-        const demoDataCleared = localStorage.getItem('demoDataCleared');
-        if (!demoDataCleared) {
-            localStorage.removeItem('imadaSharedRanking');
-            localStorage.removeItem('imadaGameRanking');
-            localStorage.setItem('demoDataCleared', 'true');
-            console.log('デモデータをクリアしました');
-        }
+        // 強制的にすべてのランキングデータをクリア
+        localStorage.removeItem('imadaSharedRanking');
+        localStorage.removeItem('imadaGameRanking');
+        localStorage.removeItem('imadaOnlineRanking');
+        localStorage.removeItem('demoDataCleared');
+        console.log('すべてのランキングデータをクリアしました');
     }
 
     /**
