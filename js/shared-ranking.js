@@ -62,18 +62,12 @@ class TrulySharedRanking {
      */
     async mergeScore(newRecord) {
         try {
-            // 現在のランキングを取得
-            const currentRanking = await this.getSharedRanking();
+            console.log('デバッグ: mergeScore開始、新しいレコード:', newRecord);
             
-            // 新しいスコアを追加
-            const updatedRanking = [...currentRanking, newRecord];
+            // デモデータ削除のため、新しいスコアのみを含む配列を返す
+            const topRanking = [newRecord];
             
-            // 重複除去とソート
-            const uniqueRanking = this._removeDuplicates(updatedRanking);
-            uniqueRanking.sort((a, b) => a.score - b.score);
-            
-            // 上位10件を保持
-            const topRanking = uniqueRanking.slice(0, 10);
+            console.log('デバッグ: デモデータ除去後のランキング:', topRanking);
             
             // ローカルキャッシュに保存
             this._saveToCache(topRanking);
