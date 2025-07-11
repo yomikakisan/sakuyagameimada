@@ -25,24 +25,29 @@ class Game {
      * ゲーム初期化
      */
     async init() {
-        console.log('DEBUG: ゲーム初期化開始 - バージョン 3.0');
+        console.log('DEBUG: ゲーム初期化開始 - バージョン 3.1');
         this._setupGameArea();
         
         // 非同期でランキング読み込み
+        console.log('=== ランキング初期化開始 ===');
         try {
+            console.log('getDisplayRanking呼び出し...');
             const displayRanking = await this.rankingManager.getDisplayRanking();
+            console.log('初期化時ランキングデータ:', displayRanking);
             this.uiManager.renderRanking(displayRanking);
+            console.log('初期ランキング表示完了');
         } catch (error) {
-            console.warn('ランキング初期化エラー:', error);
+            console.error('ランキング初期化エラー:', error);
             this.uiManager.renderRanking([]);
         }
+        console.log('=== ランキング初期化完了 ===');
         
         this.uiManager.showInitialState();
         
         // グローバル参照設定（UIManagerのコールバック用）
         window.game = this;
         
-        console.log('ゲーム初期化完了 - バージョン 3.0');
+        console.log('ゲーム初期化完了 - バージョン 3.1');
     }
 
     /**
