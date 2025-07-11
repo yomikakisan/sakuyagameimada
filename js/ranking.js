@@ -4,7 +4,7 @@
 class RankingManager {
     constructor() {
         this.storageKey = CONFIG.RANKING.STORAGE_KEY;
-        this.onlineRanking = new SimpleOnlineRanking();
+        this.sharedRanking = new TrulySharedRanking();
     }
 
     /**
@@ -13,8 +13,8 @@ class RankingManager {
      */
     async getRanking() {
         try {
-            // 共有ランキングから取得
-            const ranking = await this.onlineRanking.getSharedRanking();
+            // 真の共有ランキングから取得
+            const ranking = await this.sharedRanking.getSharedRanking();
             return ranking.filter(record => SecurityUtils.validateRecord(record));
         } catch (error) {
             console.warn('共有ランキング取得エラー:', error);
@@ -67,7 +67,7 @@ class RankingManager {
             const newRecord = this._createRecord(sanitizedName, score);
             
             // 共有ランキングにマージ
-            const updatedRanking = await this.onlineRanking.mergeScore(newRecord);
+            const updatedRanking = await this.sharedRanking.mergeScore(newRecord);
             
             // ランク計算
             const rank = this._calculateRank(updatedRanking, newRecord);
