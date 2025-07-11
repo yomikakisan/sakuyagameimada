@@ -27,6 +27,9 @@ class Game {
     async init() {
         this._setupGameArea();
         
+        // デモデータクリア（初回のみ）
+        this._clearDemoData();
+        
         // 非同期でランキング読み込み
         try {
             const displayRanking = await this.rankingManager.getDisplayRanking();
@@ -251,6 +254,19 @@ class Game {
             case 'KeyM':
                 this.toggleMute();
                 break;
+        }
+    }
+
+    /**
+     * デモデータクリア
+     */
+    _clearDemoData() {
+        const demoDataCleared = localStorage.getItem('demoDataCleared');
+        if (!demoDataCleared) {
+            localStorage.removeItem('imadaSharedRanking');
+            localStorage.removeItem('imadaGameRanking');
+            localStorage.setItem('demoDataCleared', 'true');
+            console.log('デモデータをクリアしました');
         }
     }
 
