@@ -18,11 +18,15 @@ class TrulySharedRanking {
      */
     async getSharedRanking() {
         try {
+            console.log('デバッグ: getSharedRanking開始');
+            
             // キャッシュチェック
             if (this._isCacheValid()) {
+                console.log('デバッグ: キャッシュが有効');
                 return this._getLocalCache();
             }
 
+            console.log('デバッグ: GitHub Gistから取得試行');
             // GitHub Gistから取得を試行
             const response = await fetch(this.gistUrl, {
                 headers: {
@@ -33,6 +37,7 @@ class TrulySharedRanking {
             if (response.ok) {
                 const gist = await response.json();
                 const rankingData = this._extractRankingFromGist(gist);
+                console.log('デバッグ: Gistから取得したデータ:', rankingData);
                 
                 // ローカルキャッシュに保存
                 this._saveToCache(rankingData);
@@ -44,7 +49,9 @@ class TrulySharedRanking {
 
         } catch (error) {
             console.warn('共有ランキング取得失敗:', error.message);
-            return this._getLocalCache();
+            const cache = this._getLocalCache();
+            console.log('デバッグ: フォールバックキャッシュ:', cache);
+            return cache;
         }
     }
 

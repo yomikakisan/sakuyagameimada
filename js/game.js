@@ -33,6 +33,7 @@ class Game {
         // 非同期でランキング読み込み
         try {
             const displayRanking = await this.rankingManager.getDisplayRanking();
+            console.log('デバッグ: 取得したランキング:', displayRanking);
             this.uiManager.renderRanking(displayRanking);
         } catch (error) {
             console.warn('ランキング初期化エラー:', error);
