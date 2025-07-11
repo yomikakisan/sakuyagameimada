@@ -249,73 +249,10 @@ button:active {
 }
 
 
-/* ランキングセクション */
-#ranking-section {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(255, 255, 255, 0.98);
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    border: 2px solid #d63384;
-    min-width: 350px;
-    max-width: 400px;
-    z-index: 15;
-}
-
-#ranking-section h3 {
-    color: #d63384;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-#ranking ol {
-    list-style: none;
-    counter-reset: ranking;
-}
-
-#ranking li {
-    counter-increment: ranking;
-    margin: 8px 0;
-    padding: 8px;
-    background: rgba(240, 240, 240, 0.8);
-    border-radius: 8px;
-    position: relative;
-    padding-left: 40px;
-}
-
-#ranking li::before {
-    content: counter(ranking);
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #007bff;
-    color: white;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8em;
-    font-weight: bold;
-}
-
-#ranking li:first-child::before {
-    background: #ffd700;
-    color: #333;
-}
-
-#ranking li:nth-child(2)::before {
-    background: #c0c0c0;
-    color: #333;
-}
-
-#ranking li:nth-child(3)::before {
-    background: #cd7f32;
-    color: white;
+/* ランキング機能は一時停止中 */
+#ranking-section,
+#name-input-area {
+    display: none !important;
 }
 
 /* 音量調整 */
@@ -400,12 +337,7 @@ button:active {
         font-size: 0.9em;
     }
     
-    #ranking-section {
-        bottom: 10px;
-        left: 10px;
-        max-width: 300px;
-        min-width: 280px;
-    }
+    /* ランキングセクションは停止中 */
     
     #audio-controls {
         top: 10px;
@@ -446,11 +378,7 @@ button:active {
         padding: 15px;
     }
     
-    #ranking-section {
-        max-width: 220px;
-        min-width: 200px;
-        padding: 15px;
-    }
+    /* ランキングセクションは停止中 */
     
     #audio-controls {
         padding: 10px;
