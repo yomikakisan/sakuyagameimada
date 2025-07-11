@@ -165,12 +165,17 @@ class TrulySharedRanking {
     _getLocalCache() {
         try {
             const cached = localStorage.getItem(this.fallbackKey);
-            console.log('デバッグ: ローカルキャッシュの内容:', cached);
+            if (!cached) return [];
             
-            // 強制的にローカルストレージをクリアして空配列を返す
-            localStorage.removeItem(this.fallbackKey);
-            console.log('デバッグ: ローカルキャッシュを削除しました');
-            return [];
+            const data = JSON.parse(cached);
+            
+            // デモデータを除外してフィルタリング
+            const filteredData = data.filter(record => {
+                const isDemoData = ['ニンジャマスター', 'スピードキング', 'リフレックス', 'サクヤファン', '反応の達人', 'クイックドロー', '瞬速の忍'].includes(record.name);
+                return !isDemoData && SecurityUtils.validateRecord(record);
+            });
+            
+            return filteredData;
         } catch (error) {
             console.warn('キャッシュ取得エラー:', error);
             return [];
