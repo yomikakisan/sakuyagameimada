@@ -33,7 +33,6 @@ class Game {
         // 非同期でランキング読み込み
         try {
             const displayRanking = await this.rankingManager.getDisplayRanking();
-            console.log('デバッグ: 取得したランキング:', displayRanking);
             this.uiManager.renderRanking(displayRanking);
         } catch (error) {
             console.warn('ランキング初期化エラー:', error);
@@ -172,19 +171,25 @@ class Game {
     async submitScore() {
         const playerName = this.uiManager.getPlayerName();
         
+        console.log('デバッグ: submitScore開始', { playerName, reactionTime: this.state.currentReactionTime });
+        
         if (!playerName.trim()) {
             this.uiManager.showError('名前を入力してください');
             return;
         }
 
         try {
+            console.log('デバッグ: addScore呼び出し前');
             const result = await this.rankingManager.addScore(playerName, this.state.currentReactionTime);
+            console.log('デバッグ: addScore結果:', result);
 
             if (result.success) {
                 this.state.currentRank = result.rank;
                 
                 // ランキング表示を更新
+                console.log('デバッグ: ランキング表示更新前');
                 const displayRanking = await this.rankingManager.getDisplayRanking();
+                console.log('デバッグ: 表示用ランキング:', displayRanking);
                 this.uiManager.renderRanking(displayRanking);
 
                 if (result.isHighScore) {
