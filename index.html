@@ -41,13 +41,10 @@
     <link rel="stylesheet" href="style.css">
     
     <!-- JavaScript モジュール -->
-    <script src="js/config.js?v=3.5"></script>
-    <script src="js/security.js?v=3.5"></script>
-    <script src="js/shared-ranking.js?v=3.5"></script>
-    <script src="js/audio.js?v=3.5"></script>
-    <script src="js/ranking.js?v=3.5"></script>
-    <script src="js/ui.js?v=3.5"></script>
-    <script src="js/game.js?v=3.5"></script>
+    <script src="js/config.js?v=4.1"></script>
+    <script src="js/audio.js?v=4.1"></script>
+    <script src="js/ui-simple.js?v=4.1"></script>
+    <script src="js/game.js?v=4.1"></script>
 </head>
 <body>
     <div id="game-container">
@@ -80,15 +77,7 @@
         <!-- メッセージ表示エリア -->
         <div id="message-area">
             <div id="result-message"></div>
-            <div id="name-input-area" style="display: none;">
-                <p>ハイスコア達成！名前を入力してください：</p>
-                <input type="text" id="player-name" maxlength="20" placeholder="名前を入力" 
-                       pattern="[a-zA-Z0-9ひらがなカタカナ一-龯々〇〻ー！？。、・（）()\[\]\s\-_]+"
-                       title="日本語、英数字、一般的な記号のみ使用できます"
-                       autocomplete="off"
-                       spellcheck="false">
-                <button onclick="window.game.submitScore()">登録</button>
-            </div>
+            <!-- ランキング登録機能は一時停止中 -->
             <button id="share-button" style="display: none;" onclick="window.game.shareToX()">
                 結果をXでシェア
             </button>
@@ -97,16 +86,7 @@
             </button>
         </div>
 
-        <!-- ランキング表示 -->
-        <div id="ranking-section">
-            <h3>🏆 みんなのランキングTOP5</h3>
-            <div id="ranking">
-                <p>記録がありません</p>
-            </div>
-            <p style="font-size: 0.8em; color: #666; margin-top: 10px;">
-                🌍 世界中のプレイヤーと競争中！
-            </p>
-        </div>
+        <!-- ランキング機能は一時的に停止中 -->
 
         <!-- 音量調整 -->
         <div id="audio-controls">

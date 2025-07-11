@@ -15,8 +15,7 @@ class Game {
 
         // 依存クラス初期化
         this.audioManager = new AudioManager();
-        this.rankingManager = new RankingManager();
-        this.uiManager = new UIManager();
+        this.uiManager = new SimpleUIManager();
 
         this.init();
     }
@@ -24,30 +23,12 @@ class Game {
     /**
      * ゲーム初期化
      */
-    async init() {
-        console.log('DEBUG: ゲーム初期化開始 - バージョン 3.5');
+    init() {
         this._setupGameArea();
-        
-        // 非同期でランキング読み込み
-        console.log('=== ランキング初期化開始 ===');
-        try {
-            console.log('getDisplayRanking呼び出し...');
-            const displayRanking = await this.rankingManager.getDisplayRanking();
-            console.log('初期化時ランキングデータ:', displayRanking);
-            this.uiManager.renderRanking(displayRanking);
-            console.log('初期ランキング表示完了');
-        } catch (error) {
-            console.error('ランキング初期化エラー:', error);
-            this.uiManager.renderRanking([]);
-        }
-        console.log('=== ランキング初期化完了 ===');
-        
         this.uiManager.showInitialState();
         
         // グローバル参照設定（UIManagerのコールバック用）
         window.game = this;
-        
-        console.log('ゲーム初期化完了 - バージョン 3.5');
     }
 
     /**
@@ -66,8 +47,6 @@ class Game {
     startGame() {
         if (this.state.isPlaying) return;
 
-        console.log('ゲーム開始');
-
         this._resetState();
         this.state.isPlaying = true;
         this.state.gameStarted = true;
@@ -77,7 +56,6 @@ class Game {
 
         // ランダム遅延後に合図表示
         const delay = this._generateRandomDelay();
-        console.log(`合図まで ${Math.round(delay)}ms`);
 
         setTimeout(() => {
             this._showSignal();
@@ -89,8 +67,6 @@ class Game {
      */
     _showSignal() {
         if (!this.state.isPlaying) return;
-
-        console.log('合図表示');
 
         this.state.signalShown = true;
         this.state.startTime = performance.now();
@@ -126,8 +102,6 @@ class Game {
      * @param {number} reactionTime - 反応時間
      */
     _handleSuccess(reactionTime) {
-        console.log(`成功: ${reactionTime}ms`);
-
         this.state.isPlaying = false;
         this.state.currentReactionTime = reactionTime;
 
@@ -141,97 +115,26 @@ class Game {
      * 失敗処理
      */
     _handleFailure() {
-        console.log('フライング');
-
         this.state.isPlaying = false;
         this.audioManager.playFail();
         this.uiManager.showFailureResult();
     }
 
     /**
-     * ハイスコア判定（非同期対応）
+     * 結果表示（ランキング機能停止中）
      * @param {number} reactionTime - 反応時間
      */
-    async _checkHighScore(reactionTime) {
-        try {
-            const isTop5 = await this.rankingManager.isTopScore(reactionTime);
-
-            if (isTop5) {
-                this.state.isHighScore = true;
-                this.uiManager.showHighScoreInput(() => this.submitScore());
-            } else {
-                this.uiManager.showNormalResult();
-            }
-        } catch (error) {
-            console.error('ハイスコア判定エラー:', error);
-            this.uiManager.showNormalResult();
-        }
+    _checkHighScore(reactionTime) {
+        // ランキング機能停止中のため、単純な結果表示のみ
+        this.uiManager.showNormalResult();
     }
 
     /**
-     * スコア登録（非同期対応）
+     * スコア登録（ランキング機能停止中）
      */
-    async submitScore() {
-        const playerName = this.uiManager.getPlayerName();
-        
-        console.log('=== スコア登録開始 ===');
-        console.log('プレイヤー名:', playerName);
-        console.log('反応時間:', this.state.currentReactionTime);
-        console.log('ハイスコア状態:', this.state.isHighScore);
-        
-        if (!playerName.trim()) {
-            console.log('エラー: 名前が入力されていません');
-            this.uiManager.showError('名前を入力してください');
-            return;
-        }
-
-        try {
-            console.log('addScore呼び出し開始...');
-            const result = await this.rankingManager.addScore(playerName, this.state.currentReactionTime);
-            console.log('addScore完了、結果:', result);
-
-            if (result.success) {
-                this.state.currentRank = result.rank;
-                console.log('登録成功 - ランク:', result.rank);
-                
-                // ランキング表示を更新
-                console.log('ランキング表示更新開始...');
-                const displayRanking = await this.rankingManager.getDisplayRanking();
-                console.log('表示用ランキングデータ:', displayRanking);
-                this.uiManager.renderRanking(displayRanking);
-                console.log('ランキング表示更新完了');
-
-                if (result.isHighScore) {
-                    console.log('ハイスコア結果表示');
-                    this.uiManager.showHighScoreResult(result.rank, this.state.currentReactionTime);
-                } else {
-                    console.log('通常結果表示');
-                    this.uiManager.showNormalResult();
-                }
-
-                console.log(`=== スコア登録完了: ${playerName} - ${this.state.currentReactionTime}ms (${result.rank}位) ===`);
-                
-                // ローカルストレージの内容を確認
-                console.log('=== ローカルストレージ確認 ===');
-                const fallbackKey = 'imadaSharedRanking';
-                const storedData = localStorage.getItem(fallbackKey);
-                console.log('保存されたデータ:', storedData);
-                if (storedData) {
-                    try {
-                        const parsedData = JSON.parse(storedData);
-                        console.log('パース済みデータ:', parsedData);
-                    } catch (e) {
-                        console.error('データパースエラー:', e);
-                    }
-                }
-            } else {
-                console.error('登録失敗:', result.error);
-                this.uiManager.showError(result.error);
-            }
-        } catch (error) {
-            console.error('=== スコア登録エラー ===', error);
-            this.uiManager.showError('スコア登録に失敗しました');
-        }
+    submitScore() {
+        // ランキング機能停止中
+        console.log('ランキング機能は一時停止中です');
     }
 
     /**
@@ -252,8 +155,6 @@ class Game {
      * ゲームリセット
      */
     resetGame() {
-        console.log('ゲームリセット');
-
         this._resetState();
         this.uiManager.showInitialState();
     }
@@ -311,6 +212,8 @@ class Game {
         return Math.random() * range + CONFIG.GAME.MIN_DELAY;
     }
 
+    // ランキング関連のメソッドは一時停止中
+
     /**
      * デバッグ情報取得
      * @returns {Object} デバッグ情報
@@ -318,8 +221,7 @@ class Game {
     getDebugInfo() {
         return {
             state: this.state,
-            audioState: this.audioManager.getState(),
-            rankingCount: this.rankingManager.getRanking().length
+            audioState: this.audioManager.getState()
         };
     }
 }

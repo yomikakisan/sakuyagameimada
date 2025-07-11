@@ -9,10 +9,17 @@ class TrulySharedRanking {
         this.gistUrl = `https://api.github.com/gists/${this.gistId}`;
         this.fallbackKey = 'imadaSharedRanking';
         this.lastUpdateKey = 'imadaSharedRanking_lastUpdate';
-        this.cacheTimeout = 300000; // 5分キャッシュ（テスト用）
+        this.cacheTimeout = 300000; // 5分キャッシュ
+        
+        // GitHub API用のPersonal Access Token（リードオンリー権限）
+        // セキュリティのため、最小限の権限で作成
+        this.githubToken = localStorage.getItem('sakuya_github_token') || null;
         
         // lastUpdateを復元
         this._restoreLastUpdate();
+        
+        // 初回起動時にToken設定を確認
+        this._checkTokenSetup();
     }
 
     /**
@@ -20,18 +27,12 @@ class TrulySharedRanking {
      * @returns {Promise<Array>} ランキングデータ
      */
     async getSharedRanking() {
-        console.log('=== TrulySharedRanking.getSharedRanking開始 ===');
         try {
             // キャッシュチェック
-            console.log('キャッシュ有効性チェック...');
             if (this._isCacheValid()) {
-                console.log('キャッシュが有効、ローカルキャッシュから取得');
-                const cache = this._getLocalCache();
-                console.log('キャッシュ結果:', cache);
-                return cache;
+                return this._getLocalCache();
             }
 
-            console.log('GitHub Gistから取得開始...');
             // GitHub Gistから取得を試行
             const response = await fetch(this.gistUrl, {
                 headers: {
@@ -39,21 +40,15 @@ class TrulySharedRanking {
                 }
             });
 
-            console.log('Gist APIレスポンス:', response.status);
-
             if (response.ok) {
                 const gist = await response.json();
-                console.log('Gistデータ取得成功');
                 const gistData = this._extractRankingFromGist(gist);
-                console.log('Gistから抽出したデータ:', gistData);
                 
                 // ローカルデータも取得してマージ
                 const localData = this._getLocalCacheRaw();
-                console.log('ローカルデータ:', localData);
                 
                 // Gistとローカルデータをマージしてユニークにする
                 const mergedData = this._mergeRankingData(gistData, localData);
-                console.log('マージ後データ:', mergedData);
                 
                 // マージ結果をローカルキャッシュに保存
                 this._saveToCache(mergedData);
@@ -65,9 +60,7 @@ class TrulySharedRanking {
 
         } catch (error) {
             console.warn('共有ランキング取得失敗:', error.message);
-            const cache = this._getLocalCache();
-            console.log('エラー時フォールバック結果:', cache);
-            return cache;
+            return this._getLocalCache();
         }
     }
 
@@ -94,6 +87,14 @@ class TrulySharedRanking {
             // ローカルキャッシュに保存
             this._saveToCache(topRanking);
             
+            // GitHub Gistに自動更新試行
+            if (this.githubToken) {
+                this._updateGistData(topRanking).catch(error => {
+                    console.warn('Gist自動更新に失敗:', error.message);
+                    // 失敗してもローカルには保存済み
+                });
+            }
+            
             return topRanking;
 
         } catch (error) {
@@ -108,7 +109,7 @@ class TrulySharedRanking {
      * @returns {string} ユニークID
      */
     _generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 11);
     }
 
     /**
@@ -166,16 +167,8 @@ class TrulySharedRanking {
      * @returns {boolean} キャッシュが有効かどうか
      */
     _isCacheValid() {
-        const isValid = this.lastUpdate && 
+        return this.lastUpdate && 
                (Date.now() - this.lastUpdate) < this.cacheTimeout;
-        console.log('キャッシュ有効性:', {
-            lastUpdate: this.lastUpdate,
-            now: Date.now(),
-            diff: this.lastUpdate ? (Date.now() - this.lastUpdate) : 'null',
-            timeout: this.cacheTimeout,
-            isValid: isValid
-        });
-        return isValid;
     }
 
     /**
@@ -183,7 +176,6 @@ class TrulySharedRanking {
      * @returns {Array} キャッシュデータ
      */
     _getLocalCache() {
-        console.log('=== _getLocalCache開始 ===');
         return this._getLocalCacheRaw();
     }
 
@@ -193,25 +185,20 @@ class TrulySharedRanking {
     _getLocalCacheRaw() {
         try {
             const cached = localStorage.getItem(this.fallbackKey);
-            console.log('ローカルストレージ生データ:', cached);
             
             if (!cached) {
-                console.log('キャッシュなし、空配列を返す');
                 return [];
             }
             
             const data = JSON.parse(cached);
-            console.log('パース後データ:', data);
             
             // デモデータを除外してフィルタリング
             const filteredData = data.filter(record => {
                 const isDemoData = ['ニンジャマスター', 'スピードキング', 'リフレックス', 'サクヤファン', '反応の達人', 'クイックドロー', '瞬速の忍'].includes(record.name);
                 const isValid = SecurityUtils.validateRecord(record);
-                console.log(`レコード ${record.name}: デモ=${isDemoData}, 有効=${isValid}`);
                 return !isDemoData && isValid;
             });
             
-            console.log('フィルタ後データ:', filteredData);
             return filteredData;
         } catch (error) {
             console.warn('キャッシュ取得エラー:', error);
@@ -242,21 +229,11 @@ class TrulySharedRanking {
      */
     _saveToCache(data) {
         try {
-            console.log('=== _saveToCache開始 ===');
-            console.log('保存するデータ:', data);
-            console.log('保存キー:', this.fallbackKey);
-            
             localStorage.setItem(this.fallbackKey, JSON.stringify(data));
             this.lastUpdate = Date.now();
             
             // lastUpdateもlocalStorageに保存
             localStorage.setItem(this.lastUpdateKey, this.lastUpdate.toString());
-            console.log('lastUpdate保存:', this.lastUpdate);
-            
-            // 保存後の確認
-            const saved = localStorage.getItem(this.fallbackKey);
-            console.log('保存後の確認:', saved);
-            console.log('=== _saveToCache完了 ===');
         } catch (error) {
             console.warn('キャッシュ保存エラー:', error);
         }
@@ -270,15 +247,176 @@ class TrulySharedRanking {
             const saved = localStorage.getItem(this.lastUpdateKey);
             if (saved) {
                 this.lastUpdate = parseInt(saved, 10);
-                console.log('lastUpdate復元:', this.lastUpdate);
             } else {
                 this.lastUpdate = null;
-                console.log('lastUpdate未保存、nullに設定');
             }
         } catch (error) {
             console.warn('lastUpdate復元エラー:', error);
             this.lastUpdate = null;
         }
+    }
+
+    /**
+     * GitHub Token設定確認
+     */
+    _checkTokenSetup() {
+        if (!this.githubToken) {
+            // 初回起動時のみ表示
+            const hasShownSetup = localStorage.getItem('sakuya_token_setup_shown');
+            if (!hasShownSetup) {
+                setTimeout(() => {
+                    this._showTokenSetupModal();
+                    localStorage.setItem('sakuya_token_setup_shown', 'true');
+                }, 2000);
+            }
+        }
+    }
+
+    /**
+     * GitHub Token設定モーダル表示
+     */
+    _showTokenSetupModal() {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        `;
+
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: white; padding: 20px; border-radius: 10px; max-width: 90%; max-height: 90%;
+            overflow-y: auto;
+        `;
+
+        content.innerHTML = `
+            <h3>🌍 ランキング共有機能を有効にしますか？</h3>
+            <p>他のプレイヤーとリアルタイムでランキングを共有できます！</p>
+            
+            <h4>🔑 GitHub Personal Access Tokenの作成手順:</h4>
+            <ol style="font-size: 14px; line-height: 1.6;">
+                <li><a href="https://github.com/settings/tokens" target="_blank">ここをクリックしてGitHubのトークンページを開く</a></li>
+                <li>「新しいトークンを生成」ボタンをクリック</li>
+                <li>「トークン名」に「Sakuya Game Ranking」と入力</li>
+                <li>「有効期限」を「30日」に設定</li>
+                <li>「gist」権限のみをチェック</li>
+                <li>「トークンを生成」をクリック</li>
+                <li>生成されたトークンをコピー</li>
+            </ol>
+            
+            <div style="margin: 15px 0;">
+                <label for="github-token">🔑 GitHub Personal Access Token:</label><br>
+                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
+                       style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px;">
+                <p style="font-size: 12px; color: #666;">
+                    ⚠️ トークンはローカルにのみ保存され、外部に送信されません
+                </p>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="window.trulySharedRanking._saveToken()" 
+                        style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px;">
+                    ✅ 設定して共有機能を有効にする
+                </button>
+                <button onclick="this.closest('div').parentElement.remove()" 
+                        style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px;">
+                    ⏭️ 後で設定する
+                </button>
+            </div>
+        `;
+
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        // グローバル参照設定
+        window.trulySharedRanking = this;
+    }
+
+    /**
+     * Token保存
+     */
+    _saveToken() {
+        const tokenInput = document.getElementById('github-token');
+        const token = tokenInput?.value.trim();
+        
+        if (!token) {
+            alert('トークンを入力してください');
+            return;
+        }
+        
+        if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+            alert('無効なGitHub Personal Access Token形式です');
+            return;
+        }
+        
+        localStorage.setItem('sakuya_github_token', token);
+        this.githubToken = token;
+        
+        // モーダルを閉じる
+        document.querySelector('div[style*="position: fixed"]')?.remove();
+        
+        alert('✅ 共有機能が有効になりました！\nハイスコアを達成すると自動で共有されます。');
+    }
+
+    /**
+     * GitHub Gist自動更新
+     * @param {Array} rankingData - 更新するランキングデータ
+     * @returns {Promise<void>}
+     */
+    async _updateGistData(rankingData) {
+        if (!this.githubToken) {
+            throw new Error('GitHub tokenが設定されていません');
+        }
+
+        const gistData = {
+            files: {
+                'sakuya-game-ranking.json': {
+                    content: JSON.stringify(rankingData, null, 2)
+                }
+            }
+        };
+
+        const response = await fetch(this.gistUrl, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${this.githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(gistData)
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Gist更新失敗: ${response.status} - ${error}`);
+        }
+
+        console.log('✅ ランキングがGitHub Gistに自動更新されました！');
+        return response.json();
+    }
+
+    /**
+     * 共有機能の状態確認
+     * @returns {boolean} 共有機能が有効かどうか
+     */
+    isSharedModeEnabled() {
+        return !!this.githubToken;
+    }
+
+    /**
+     * Token再設定モーダル表示
+     */
+    showTokenSetup() {
+        this._showTokenSetupModal();
+    }
+
+    /**
+     * 共有機能を無効化
+     */
+    disableSharing() {
+        localStorage.removeItem('sakuya_github_token');
+        this.githubToken = null;
+        alert('共有機能を無効にしました。');
     }
 
     /**
@@ -289,7 +427,8 @@ class TrulySharedRanking {
             gistUrl: this.gistUrl,
             lastUpdate: this.lastUpdate,
             cacheValid: this._isCacheValid(),
-            localCount: this._getLocalCache().length
+            localCount: this._getLocalCache().length,
+            sharedModeEnabled: this.isSharedModeEnabled()
         };
     }
 }
