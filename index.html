@@ -70,7 +70,11 @@
             <div id="result-message"></div>
             <div id="name-input-area" style="display: none;">
                 <p>ハイスコア達成！名前を入力してください：</p>
-                <input type="text" id="player-name" maxlength="20" placeholder="名前を入力">
+                <input type="text" id="player-name" maxlength="20" placeholder="名前を入力" 
+                       pattern="[a-zA-Z0-9ひらがなカタカナ一-龯々〇〻ー！？。、・（）()\[\]\s\-_]+"
+                       title="日本語、英数字、一般的な記号のみ使用できます"
+                       autocomplete="off"
+                       spellcheck="false">
                 <button onclick="submitScore()">登録</button>
             </div>
             <button id="share-button" style="display: none;" onclick="shareToX()">

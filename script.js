@@ -349,10 +349,25 @@ function checkHighScore(reactionTime) {
             elements.nameInputArea.style.display = 'block';
             elements.playerName.focus();
             
-            // Enterキーで登録
+            // Enterキーで登録（セキュリティ強化）
             elements.playerName.onkeypress = function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault(); // デフォルト動作を防止
                     submitScore();
+                }
+            };
+            
+            // リアルタイム入力検証
+            elements.playerName.oninput = function(e) {
+                const value = e.target.value;
+                const validation = validateAndSanitizeInput(value);
+                
+                if (!validation.isValid && value.length > 0) {
+                    e.target.style.borderColor = '#dc3545';
+                    e.target.title = validation.error;
+                } else {
+                    e.target.style.borderColor = '#007bff';
+                    e.target.title = '日本語、英数字、一般的な記号のみ使用できます';
                 }
             };
         } else {
@@ -371,29 +386,120 @@ function showNormalResult() {
     elements.retryButton.style.display = 'inline-block';
 }
 
+// セキュリティ: 入力値検証・サニタイズ
+function validateAndSanitizeInput(input) {
+    if (!input || typeof input !== 'string') {
+        return { isValid: false, error: '入力が無効です' };
+    }
+    
+    // 文字数制限
+    if (input.length > 20) {
+        return { isValid: false, error: '名前は20文字以内で入力してください' };
+    }
+    
+    if (input.length < 1) {
+        return { isValid: false, error: '名前を入力してください' };
+    }
+    
+    // 危険な文字の検出
+    const dangerousPatterns = [
+        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, // script タグ
+        /javascript:/gi, // javascript: スキーム
+        /on\w+\s*=/gi, // イベントハンドラー
+        /<iframe/gi, // iframe タグ
+        /<object/gi, // object タグ
+        /<embed/gi, // embed タグ
+        /<link/gi, // link タグ
+        /<meta/gi, // meta タグ
+        /eval\s*\(/gi, // eval 関数
+        /document\./gi, // document オブジェクト
+        /window\./gi, // window オブジェクト
+        /\.\.\//g, // ディレクトリトラバーサル
+    ];
+    
+    for (const pattern of dangerousPatterns) {
+        if (pattern.test(input)) {
+            return { isValid: false, error: '使用できない文字が含まれています' };
+        }
+    }
+    
+    // 許可された文字のみ (日本語、英数字、一般的な記号)
+    const allowedPattern = /^[a-zA-Z0-9ひらがなカタカナ一-龯々〇〻ー！？。、・（）()[\]\s\-_]+$/;
+    if (!allowedPattern.test(input)) {
+        return { isValid: false, error: '使用できない文字が含まれています' };
+    }
+    
+    // HTMLエスケープ
+    const sanitized = input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+    
+    return { isValid: true, sanitized: sanitized.trim() };
+}
+
 // スコア登録
 function submitScore() {
-    const playerName = elements.playerName.value.trim();
+    const rawPlayerName = elements.playerName.value;
     
-    if (!playerName) {
-        alert('名前を入力してください');
+    // 入力値検証・サニタイズ
+    const validation = validateAndSanitizeInput(rawPlayerName);
+    if (!validation.isValid) {
+        alert(validation.error);
         return;
     }
     
-    if (playerName.length > 20) {
-        alert('名前は20文字以内で入力してください');
-        return;
-    }
+    const playerName = validation.sanitized;
     
     try {
+        // スコア値の検証
+        if (!gameState.currentReactionTime || 
+            typeof gameState.currentReactionTime !== 'number' ||
+            gameState.currentReactionTime < 50 || 
+            gameState.currentReactionTime > 10000) {
+            alert('無効なスコアです');
+            return;
+        }
+        
         // LocalStorageベースのランキングシステム
-        const ranking = JSON.parse(localStorage.getItem('imadaOnlineRanking') || '[]');
+        let ranking;
+        try {
+            const rankingData = localStorage.getItem('imadaOnlineRanking');
+            ranking = rankingData ? JSON.parse(rankingData) : [];
+            
+            // ランキングデータの整合性チェック
+            if (!Array.isArray(ranking)) {
+                console.warn('ランキングデータが破損しています。初期化します。');
+                ranking = [];
+            }
+        } catch (parseError) {
+            console.warn('ランキングデータの解析に失敗:', parseError);
+            ranking = [];
+        }
+        
+        // 重複登録防止（同一プレイヤー、同一スコア、短時間内）
+        const now = Date.now();
+        const recentSubmissions = ranking.filter(record => {
+            const recordTime = new Date(record.timestamp).getTime();
+            return (now - recordTime) < 10000 && // 10秒以内
+                   record.name === playerName &&
+                   Math.abs(record.score - gameState.currentReactionTime) < 5; // 5ms以内
+        });
+        
+        if (recentSubmissions.length > 0) {
+            alert('同じスコアが短時間で複数回登録されています');
+            return;
+        }
         
         // 新しいスコアを追加
         const newRecord = {
             name: playerName,
-            score: gameState.currentReactionTime,
-            timestamp: new Date().toLocaleString('ja-JP')
+            score: parseInt(gameState.currentReactionTime), // 整数化
+            timestamp: new Date().toLocaleString('ja-JP'),
+            id: now + Math.random().toString(36).substr(2, 9) // ユニークID
         };
         
         ranking.push(newRecord);
@@ -403,7 +509,16 @@ function submitScore() {
         
         // TOP10のみ保持
         const top10 = ranking.slice(0, 10);
-        localStorage.setItem('imadaOnlineRanking', JSON.stringify(top10));
+        
+        // LocalStorageサイズ制限チェック
+        const dataString = JSON.stringify(top10);
+        if (dataString.length > 50000) { // 50KB制限
+            console.warn('ランキングデータが大きすぎます。古いデータを削除します。');
+            const top5 = ranking.slice(0, 5);
+            localStorage.setItem('imadaOnlineRanking', JSON.stringify(top5));
+        } else {
+            localStorage.setItem('imadaOnlineRanking', dataString);
+        }
         
         // ランク計算
         const rank = top10.findIndex(record => 
@@ -442,6 +557,16 @@ function submitScore() {
     }
 }
 
+// セキュリティ: 出力エスケープ
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // ランキング表示
 function renderRanking(rankingData = null) {
     try {
@@ -449,7 +574,30 @@ function renderRanking(rankingData = null) {
         
         if (!ranking) {
             // LocalStorageからランキング取得
-            ranking = JSON.parse(localStorage.getItem('imadaOnlineRanking') || '[]');
+            try {
+                const rawData = localStorage.getItem('imadaOnlineRanking');
+                ranking = rawData ? JSON.parse(rawData) : [];
+                
+                // データ整合性チェック
+                if (!Array.isArray(ranking)) {
+                    ranking = [];
+                }
+                
+                // 各レコードの検証
+                ranking = ranking.filter(record => {
+                    return record &&
+                           typeof record.name === 'string' &&
+                           typeof record.score === 'number' &&
+                           typeof record.timestamp === 'string' &&
+                           record.name.length <= 20 &&
+                           record.score >= 50 &&
+                           record.score <= 10000;
+                });
+                
+            } catch (parseError) {
+                console.warn('ランキングデータの解析エラー:', parseError);
+                ranking = [];
+            }
         }
         
         if (ranking.length === 0) {
@@ -459,7 +607,12 @@ function renderRanking(rankingData = null) {
         
         const listItems = ranking.slice(0, 5).map((record, index) => {
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-            return `<li>${medal} ${record.name} - ${record.score}ms <small>(${record.timestamp})</small></li>`;
+            // XSS対策: 全ての出力をエスケープ
+            const safeName = escapeHtml(record.name);
+            const safeScore = parseInt(record.score); // 数値のサニタイズ
+            const safeTimestamp = escapeHtml(record.timestamp);
+            
+            return `<li>${medal} ${safeName} - ${safeScore}ms <small>(${safeTimestamp})</small></li>`;
         }).join('');
         
         elements.ranking.innerHTML = `<ol>${listItems}</ol>`;
