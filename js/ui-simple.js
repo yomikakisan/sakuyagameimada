@@ -166,6 +166,12 @@ class SimpleUIManager {
         if (this.elements.resultMessage) {
             this.elements.resultMessage.textContent = message;
             this.elements.resultMessage.className = `result-message ${type}`;
+            
+            // メッセージエリアを表示
+            const messageArea = document.getElementById('message-area');
+            if (messageArea) {
+                messageArea.classList.add('visible');
+            }
         }
     }
 
@@ -176,6 +182,12 @@ class SimpleUIManager {
         if (this.elements.resultMessage) {
             this.elements.resultMessage.textContent = '';
             this.elements.resultMessage.className = 'result-message';
+            
+            // メッセージエリアを非表示
+            const messageArea = document.getElementById('message-area');
+            if (messageArea) {
+                messageArea.classList.remove('visible');
+            }
         }
     }
 
