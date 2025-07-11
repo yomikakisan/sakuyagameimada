@@ -149,7 +149,8 @@ class TrulySharedRanking {
     _getLocalCache() {
         try {
             const cached = localStorage.getItem(this.fallbackKey);
-            return cached ? JSON.parse(cached) : [];
+            // デモデータを除外して返す（空配列を返す）
+            return [];
         } catch (error) {
             console.warn('キャッシュ取得エラー:', error);
             return [];

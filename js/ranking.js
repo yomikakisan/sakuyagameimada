@@ -28,15 +28,8 @@ class RankingManager {
      */
     _getLocalFallback() {
         try {
-            const rawData = localStorage.getItem(this.storageKey);
-            let ranking = rawData ? JSON.parse(rawData) : [];
-            
-            if (!Array.isArray(ranking)) {
-                console.warn('ランキングデータが破損しています。初期化します。');
-                ranking = [];
-            }
-            
-            return ranking.filter(record => SecurityUtils.validateRecord(record));
+            // デモデータを返さず、常に空配列を返す
+            return [];
         } catch (parseError) {
             console.warn('ランキングデータの解析エラー:', parseError);
             return [];
