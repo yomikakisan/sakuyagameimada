@@ -25,7 +25,7 @@ class Game {
      * ゲーム初期化
      */
     async init() {
-        console.log('DEBUG: ゲーム初期化開始 - バージョン 2.0');
+        console.log('DEBUG: ゲーム初期化開始 - バージョン 3.0');
         this._setupGameArea();
         
         // 非同期でランキング読み込み
@@ -42,7 +42,7 @@ class Game {
         // グローバル参照設定（UIManagerのコールバック用）
         window.game = this;
         
-        console.log('ゲーム初期化完了 - バージョン 2.0');
+        console.log('ゲーム初期化完了 - バージョン 3.0');
     }
 
     /**
@@ -205,6 +205,20 @@ class Game {
                 }
 
                 console.log(`=== スコア登録完了: ${playerName} - ${this.state.currentReactionTime}ms (${result.rank}位) ===`);
+                
+                // ローカルストレージの内容を確認
+                console.log('=== ローカルストレージ確認 ===');
+                const fallbackKey = 'imadaSharedRanking';
+                const storedData = localStorage.getItem(fallbackKey);
+                console.log('保存されたデータ:', storedData);
+                if (storedData) {
+                    try {
+                        const parsedData = JSON.parse(storedData);
+                        console.log('パース済みデータ:', parsedData);
+                    } catch (e) {
+                        console.error('データパースエラー:', e);
+                    }
+                }
             } else {
                 console.error('登録失敗:', result.error);
                 this.uiManager.showError(result.error);
