@@ -181,20 +181,6 @@ class RankingManager {
                score < ranking[CONFIG.RANKING.DISPLAY_COUNT - 1]?.score;
     }
 
-    /**
-     * ランキングクリア
-     * @returns {boolean} 成功かどうか
-     */
-    clearRanking() {
-        try {
-            localStorage.removeItem(this.storageKey);
-            localStorage.removeItem('imadaRanking'); // 旧データも削除
-            return true;
-        } catch (error) {
-            console.error('ランキングクリアエラー:', error);
-            return false;
-        }
-    }
 
     /**
      * 表示用ランキングデータ取得

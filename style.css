@@ -248,15 +248,6 @@ button:active {
     background: linear-gradient(135deg, #0d8bd9, #0a7bc4);
 }
 
-#clear-ranking {
-    background: linear-gradient(135deg, #dc3545, #c82333);
-    font-size: 0.9em;
-    padding: 8px 16px;
-}
-
-#clear-ranking:hover {
-    background: linear-gradient(135deg, #c82333, #a71e2a);
-}
 
 /* ランキングセクション */
 #ranking-section {

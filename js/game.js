@@ -208,17 +208,6 @@ class Game {
         this.uiManager.showInitialState();
     }
 
-    /**
-     * ランキングクリア
-     */
-    clearRanking() {
-        if (confirm('ランキングを全て削除しますか？')) {
-            if (this.rankingManager.clearRanking()) {
-                this.uiManager.renderRanking([]);
-                console.log('ランキングクリア');
-            }
-        }
-    }
 
     /**
      * ミュート切り替え
