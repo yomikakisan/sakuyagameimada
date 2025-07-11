@@ -156,7 +156,11 @@ class TrulySharedRanking {
     _getLocalCache() {
         try {
             const cached = localStorage.getItem(this.fallbackKey);
-            // デモデータを除外して返す（空配列を返す）
+            console.log('デバッグ: ローカルキャッシュの内容:', cached);
+            
+            // 強制的にローカルストレージをクリアして空配列を返す
+            localStorage.removeItem(this.fallbackKey);
+            console.log('デバッグ: ローカルキャッシュを削除しました');
             return [];
         } catch (error) {
             console.warn('キャッシュ取得エラー:', error);

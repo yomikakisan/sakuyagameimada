@@ -262,12 +262,30 @@ class Game {
      * デモデータクリア
      */
     _clearDemoData() {
-        // 強制的にすべてのランキングデータをクリア
-        localStorage.removeItem('imadaSharedRanking');
-        localStorage.removeItem('imadaGameRanking');
-        localStorage.removeItem('imadaOnlineRanking');
-        localStorage.removeItem('demoDataCleared');
-        console.log('すべてのランキングデータをクリアしました');
+        // すべてのローカルストレージの内容をチェック
+        console.log('デバッグ: ローカルストレージの全内容:');
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            console.log(`${key}: ${value}`);
+        }
+        
+        // 強制的にすべてのランキング関連データをクリア
+        const keysToRemove = [
+            'imadaSharedRanking', 
+            'imadaGameRanking', 
+            'imadaOnlineRanking',
+            'demoDataCleared'
+        ];
+        
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`削除: ${key}`);
+        });
+        
+        // 完全にローカルストレージをクリア
+        localStorage.clear();
+        console.log('すべてのローカルストレージをクリアしました');
     }
 
     /**
