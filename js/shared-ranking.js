@@ -49,7 +49,7 @@ class TrulySharedRanking {
     }
 
     /**
-     * 新しいスコアをマージ（ローカル + 疑似共有）
+     * 新しいスコアをマージ（純粋な共有ランキング）
      * @param {Object} newRecord - 新しいスコア記録
      * @returns {Promise<Array>} 更新されたランキング
      */
@@ -58,14 +58,11 @@ class TrulySharedRanking {
             // 現在のランキングを取得
             const currentRanking = await this.getSharedRanking();
             
-            // 疑似的な共有データを生成（デモ用）
-            const demoRanking = this._generateDemoRanking();
-            
-            // ローカルスコアとデモデータをマージ
-            const combinedRanking = [...currentRanking, ...demoRanking, newRecord];
+            // 新しいスコアを追加
+            const updatedRanking = [...currentRanking, newRecord];
             
             // 重複除去とソート
-            const uniqueRanking = this._removeDuplicates(combinedRanking);
+            const uniqueRanking = this._removeDuplicates(updatedRanking);
             uniqueRanking.sort((a, b) => a.score - b.score);
             
             // 上位10件を保持
@@ -82,37 +79,6 @@ class TrulySharedRanking {
         }
     }
 
-    /**
-     * デモ用ランキングデータ生成
-     * @returns {Array} デモランキングデータ
-     */
-    _generateDemoRanking() {
-        const demoPlayers = [
-            { name: 'ニンジャマスター', score: 185 },
-            { name: 'スピードキング', score: 198 },
-            { name: 'リフレックス', score: 210 },
-            { name: 'サクヤファン', score: 225 },
-            { name: '反応の達人', score: 240 },
-            { name: 'クイックドロー', score: 255 },
-            { name: '瞬速の忍', score: 270 }
-        ];
-
-        return demoPlayers.map(player => ({
-            ...player,
-            timestamp: this._getRandomRecentTime(),
-            id: this._generateId()
-        }));
-    }
-
-    /**
-     * ランダムな最近の時刻生成
-     * @returns {string} タイムスタンプ
-     */
-    _getRandomRecentTime() {
-        const now = Date.now();
-        const randomPast = now - Math.random() * 7 * 24 * 60 * 60 * 1000; // 過去7日以内
-        return new Date(randomPast).toLocaleString('ja-JP');
-    }
 
     /**
      * ID生成
