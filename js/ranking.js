@@ -4,27 +4,39 @@
 class RankingManager {
     constructor() {
         this.storageKey = CONFIG.RANKING.STORAGE_KEY;
+        this.onlineRanking = new SimpleOnlineRanking();
     }
 
     /**
-     * ランキングデータ取得
-     * @returns {Array} ランキングデータ
+     * ランキングデータ取得（共有ランキング対応）
+     * @returns {Promise<Array>} ランキングデータ
      */
-    getRanking() {
+    async getRanking() {
+        try {
+            // 共有ランキングから取得
+            const ranking = await this.onlineRanking.getSharedRanking();
+            return ranking.filter(record => SecurityUtils.validateRecord(record));
+        } catch (error) {
+            console.warn('共有ランキング取得エラー:', error);
+            return this._getLocalFallback();
+        }
+    }
+
+    /**
+     * ローカルフォールバック
+     * @returns {Array} ローカルランキングデータ
+     */
+    _getLocalFallback() {
         try {
             const rawData = localStorage.getItem(this.storageKey);
             let ranking = rawData ? JSON.parse(rawData) : [];
             
-            // データ整合性チェック
             if (!Array.isArray(ranking)) {
                 console.warn('ランキングデータが破損しています。初期化します。');
                 ranking = [];
             }
             
-            // 各レコードの検証とフィルタリング
-            ranking = ranking.filter(record => SecurityUtils.validateRecord(record));
-            
-            return ranking;
+            return ranking.filter(record => SecurityUtils.validateRecord(record));
         } catch (parseError) {
             console.warn('ランキングデータの解析エラー:', parseError);
             return [];
@@ -32,12 +44,12 @@ class RankingManager {
     }
 
     /**
-     * スコア登録
+     * スコア登録（共有ランキング対応）
      * @param {string} name - プレイヤー名
      * @param {number} score - スコア
-     * @returns {Object} 登録結果 { success, rank, isHighScore, ranking }
+     * @returns {Promise<Object>} 登録結果 { success, rank, isHighScore, ranking }
      */
-    addScore(name, score) {
+    async addScore(name, score) {
         try {
             // 入力検証
             const nameValidation = SecurityUtils.validateAndSanitizeInput(name);
@@ -50,37 +62,22 @@ class RankingManager {
             }
 
             const sanitizedName = nameValidation.sanitized;
-            const ranking = this.getRanking();
-
-            // 重複登録防止
-            const duplicateCheck = this._checkDuplicate(ranking, sanitizedName, score);
-            if (!duplicateCheck.isValid) {
-                return { success: false, error: duplicateCheck.error };
-            }
-
+            
             // 新しいレコード作成
             const newRecord = this._createRecord(sanitizedName, score);
-            ranking.push(newRecord);
-
-            // ソートとトップN選出
-            ranking.sort((a, b) => a.score - b.score);
-            const topRecords = ranking.slice(0, CONFIG.RANKING.MAX_RECORDS);
-
-            // 保存
-            const saveResult = this._saveRanking(topRecords);
-            if (!saveResult.success) {
-                return saveResult;
-            }
-
+            
+            // 共有ランキングにマージ
+            const updatedRanking = await this.onlineRanking.mergeScore(newRecord);
+            
             // ランク計算
-            const rank = this._calculateRank(topRecords, newRecord);
+            const rank = this._calculateRank(updatedRanking, newRecord);
             const isHighScore = rank <= CONFIG.RANKING.DISPLAY_COUNT;
 
             return {
                 success: true,
                 rank,
                 isHighScore,
-                ranking: topRecords
+                ranking: updatedRanking
             };
 
         } catch (error) {
@@ -171,23 +168,23 @@ class RankingManager {
     }
 
     /**
-     * TOP5判定
+     * TOP5判定（非同期対応）
      * @param {number} score - チェックするスコア
-     * @returns {boolean} TOP5に入るかどうか
+     * @returns {Promise<boolean>} TOP5に入るかどうか
      */
-    isTopScore(score) {
-        const ranking = this.getRanking();
+    async isTopScore(score) {
+        const ranking = await this.getRanking();
         return ranking.length < CONFIG.RANKING.DISPLAY_COUNT || 
                score < ranking[CONFIG.RANKING.DISPLAY_COUNT - 1]?.score;
     }
 
 
     /**
-     * 表示用ランキングデータ取得
-     * @returns {Array} 表示用データ
+     * 表示用ランキングデータ取得（非同期対応）
+     * @returns {Promise<Array>} 表示用データ
      */
-    getDisplayRanking() {
-        const ranking = this.getRanking();
+    async getDisplayRanking() {
+        const ranking = await this.getRanking();
         return ranking.slice(0, CONFIG.RANKING.DISPLAY_COUNT).map((record, index) => ({
             ...record,
             rank: index + 1,

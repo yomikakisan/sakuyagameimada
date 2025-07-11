@@ -24,9 +24,18 @@ class Game {
     /**
      * ゲーム初期化
      */
-    init() {
+    async init() {
         this._setupGameArea();
-        this.uiManager.renderRanking(this.rankingManager.getDisplayRanking());
+        
+        // 非同期でランキング読み込み
+        try {
+            const displayRanking = await this.rankingManager.getDisplayRanking();
+            this.uiManager.renderRanking(displayRanking);
+        } catch (error) {
+            console.warn('ランキング初期化エラー:', error);
+            this.uiManager.renderRanking([]);
+        }
+        
         this.uiManager.showInitialState();
         
         // グローバル参照設定（UIManagerのコールバック用）
@@ -134,12 +143,12 @@ class Game {
     }
 
     /**
-     * ハイスコア判定
+     * ハイスコア判定（非同期対応）
      * @param {number} reactionTime - 反応時間
      */
-    _checkHighScore(reactionTime) {
+    async _checkHighScore(reactionTime) {
         try {
-            const isTop5 = this.rankingManager.isTopScore(reactionTime);
+            const isTop5 = await this.rankingManager.isTopScore(reactionTime);
 
             if (isTop5) {
                 this.state.isHighScore = true;
@@ -154,9 +163,9 @@ class Game {
     }
 
     /**
-     * スコア登録
+     * スコア登録（非同期対応）
      */
-    submitScore() {
+    async submitScore() {
         const playerName = this.uiManager.getPlayerName();
         
         if (!playerName.trim()) {
@@ -164,23 +173,30 @@ class Game {
             return;
         }
 
-        const result = this.rankingManager.addScore(playerName, this.state.currentReactionTime);
+        try {
+            const result = await this.rankingManager.addScore(playerName, this.state.currentReactionTime);
 
-        if (result.success) {
-            this.state.currentRank = result.rank;
-            
-            this.uiManager.renderRanking(this.rankingManager.getDisplayRanking());
+            if (result.success) {
+                this.state.currentRank = result.rank;
+                
+                // ランキング表示を更新
+                const displayRanking = await this.rankingManager.getDisplayRanking();
+                this.uiManager.renderRanking(displayRanking);
 
-            if (result.isHighScore) {
-                this.uiManager.showHighScoreResult(result.rank, this.state.currentReactionTime);
+                if (result.isHighScore) {
+                    this.uiManager.showHighScoreResult(result.rank, this.state.currentReactionTime);
+                } else {
+                    this.uiManager.showNormalResult();
+                }
+
+                console.log(`スコア登録成功: ${playerName} - ${this.state.currentReactionTime}ms (${result.rank}位)`);
             } else {
-                this.uiManager.showNormalResult();
+                this.uiManager.showError(result.error);
+                console.error('スコア登録エラー:', result.error);
             }
-
-            console.log(`スコア登録成功: ${playerName} - ${this.state.currentReactionTime}ms (${result.rank}位)`);
-        } else {
-            this.uiManager.showError(result.error);
-            console.error('スコア登録エラー:', result.error);
+        } catch (error) {
+            this.uiManager.showError('スコア登録に失敗しました');
+            console.error('スコア登録エラー:', error);
         }
     }
 
