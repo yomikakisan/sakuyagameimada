@@ -169,41 +169,49 @@ class Game {
     async submitScore() {
         const playerName = this.uiManager.getPlayerName();
         
-        console.log('デバッグ: submitScore開始', { playerName, reactionTime: this.state.currentReactionTime });
+        console.log('=== スコア登録開始 ===');
+        console.log('プレイヤー名:', playerName);
+        console.log('反応時間:', this.state.currentReactionTime);
+        console.log('ハイスコア状態:', this.state.isHighScore);
         
         if (!playerName.trim()) {
+            console.log('エラー: 名前が入力されていません');
             this.uiManager.showError('名前を入力してください');
             return;
         }
 
         try {
-            console.log('デバッグ: addScore呼び出し前');
+            console.log('addScore呼び出し開始...');
             const result = await this.rankingManager.addScore(playerName, this.state.currentReactionTime);
-            console.log('デバッグ: addScore結果:', result);
+            console.log('addScore完了、結果:', result);
 
             if (result.success) {
                 this.state.currentRank = result.rank;
+                console.log('登録成功 - ランク:', result.rank);
                 
                 // ランキング表示を更新
-                console.log('デバッグ: ランキング表示更新前');
+                console.log('ランキング表示更新開始...');
                 const displayRanking = await this.rankingManager.getDisplayRanking();
-                console.log('デバッグ: 表示用ランキング:', displayRanking);
+                console.log('表示用ランキングデータ:', displayRanking);
                 this.uiManager.renderRanking(displayRanking);
+                console.log('ランキング表示更新完了');
 
                 if (result.isHighScore) {
+                    console.log('ハイスコア結果表示');
                     this.uiManager.showHighScoreResult(result.rank, this.state.currentReactionTime);
                 } else {
+                    console.log('通常結果表示');
                     this.uiManager.showNormalResult();
                 }
 
-                console.log(`スコア登録成功: ${playerName} - ${this.state.currentReactionTime}ms (${result.rank}位)`);
+                console.log(`=== スコア登録完了: ${playerName} - ${this.state.currentReactionTime}ms (${result.rank}位) ===`);
             } else {
+                console.error('登録失敗:', result.error);
                 this.uiManager.showError(result.error);
-                console.error('スコア登録エラー:', result.error);
             }
         } catch (error) {
+            console.error('=== スコア登録エラー ===', error);
             this.uiManager.showError('スコア登録に失敗しました');
-            console.error('スコア登録エラー:', error);
         }
     }
 
