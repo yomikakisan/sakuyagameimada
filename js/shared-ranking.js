@@ -8,8 +8,11 @@ class TrulySharedRanking {
         this.gistId = 'c791657df064e4297dc694938d1b6021';
         this.gistUrl = `https://api.github.com/gists/${this.gistId}`;
         this.fallbackKey = 'imadaSharedRanking';
-        this.lastUpdate = null;
+        this.lastUpdateKey = 'imadaSharedRanking_lastUpdate';
         this.cacheTimeout = 300000; // 5分キャッシュ（テスト用）
+        
+        // lastUpdateを復元
+        this._restoreLastUpdate();
     }
 
     /**
@@ -246,12 +249,35 @@ class TrulySharedRanking {
             localStorage.setItem(this.fallbackKey, JSON.stringify(data));
             this.lastUpdate = Date.now();
             
+            // lastUpdateもlocalStorageに保存
+            localStorage.setItem(this.lastUpdateKey, this.lastUpdate.toString());
+            console.log('lastUpdate保存:', this.lastUpdate);
+            
             // 保存後の確認
             const saved = localStorage.getItem(this.fallbackKey);
             console.log('保存後の確認:', saved);
             console.log('=== _saveToCache完了 ===');
         } catch (error) {
             console.warn('キャッシュ保存エラー:', error);
+        }
+    }
+
+    /**
+     * lastUpdateをlocalStorageから復元
+     */
+    _restoreLastUpdate() {
+        try {
+            const saved = localStorage.getItem(this.lastUpdateKey);
+            if (saved) {
+                this.lastUpdate = parseInt(saved, 10);
+                console.log('lastUpdate復元:', this.lastUpdate);
+            } else {
+                this.lastUpdate = null;
+                console.log('lastUpdate未保存、nullに設定');
+            }
+        } catch (error) {
+            console.warn('lastUpdate復元エラー:', error);
+            this.lastUpdate = null;
         }
     }
 
