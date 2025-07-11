@@ -17,12 +17,18 @@ class TrulySharedRanking {
      * @returns {Promise<Array>} ランキングデータ
      */
     async getSharedRanking() {
+        console.log('=== TrulySharedRanking.getSharedRanking開始 ===');
         try {
             // キャッシュチェック
+            console.log('キャッシュ有効性チェック...');
             if (this._isCacheValid()) {
-                return this._getLocalCache();
+                console.log('キャッシュが有効、ローカルキャッシュから取得');
+                const cache = this._getLocalCache();
+                console.log('キャッシュ結果:', cache);
+                return cache;
             }
 
+            console.log('GitHub Gistから取得開始...');
             // GitHub Gistから取得を試行
             const response = await fetch(this.gistUrl, {
                 headers: {
@@ -30,9 +36,13 @@ class TrulySharedRanking {
                 }
             });
 
+            console.log('Gist APIレスポンス:', response.status);
+
             if (response.ok) {
                 const gist = await response.json();
+                console.log('Gistデータ取得成功');
                 const rankingData = this._extractRankingFromGist(gist);
+                console.log('Gistから抽出したデータ:', rankingData);
                 
                 // ローカルキャッシュに保存
                 this._saveToCache(rankingData);
@@ -44,7 +54,9 @@ class TrulySharedRanking {
 
         } catch (error) {
             console.warn('共有ランキング取得失敗:', error.message);
-            return this._getLocalCache();
+            const cache = this._getLocalCache();
+            console.log('エラー時フォールバック結果:', cache);
+            return cache;
         }
     }
 
@@ -152,18 +164,28 @@ class TrulySharedRanking {
      * @returns {Array} キャッシュデータ
      */
     _getLocalCache() {
+        console.log('=== _getLocalCache開始 ===');
         try {
             const cached = localStorage.getItem(this.fallbackKey);
-            if (!cached) return [];
+            console.log('ローカルストレージ生データ:', cached);
+            
+            if (!cached) {
+                console.log('キャッシュなし、空配列を返す');
+                return [];
+            }
             
             const data = JSON.parse(cached);
+            console.log('パース後データ:', data);
             
             // デモデータを除外してフィルタリング
             const filteredData = data.filter(record => {
                 const isDemoData = ['ニンジャマスター', 'スピードキング', 'リフレックス', 'サクヤファン', '反応の達人', 'クイックドロー', '瞬速の忍'].includes(record.name);
-                return !isDemoData && SecurityUtils.validateRecord(record);
+                const isValid = SecurityUtils.validateRecord(record);
+                console.log(`レコード ${record.name}: デモ=${isDemoData}, 有効=${isValid}`);
+                return !isDemoData && isValid;
             });
             
+            console.log('フィルタ後データ:', filteredData);
             return filteredData;
         } catch (error) {
             console.warn('キャッシュ取得エラー:', error);

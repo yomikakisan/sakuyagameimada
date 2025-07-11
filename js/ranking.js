@@ -12,13 +12,22 @@ class RankingManager {
      * @returns {Promise<Array>} ランキングデータ
      */
     async getRanking() {
+        console.log('=== RankingManager.getRanking開始 ===');
         try {
             // 真の共有ランキングから取得
+            console.log('getSharedRanking呼び出し...');
             const ranking = await this.sharedRanking.getSharedRanking();
-            return ranking.filter(record => SecurityUtils.validateRecord(record));
+            console.log('getSharedRankingから取得:', ranking);
+            
+            const filteredRanking = ranking.filter(record => SecurityUtils.validateRecord(record));
+            console.log('セキュリティフィルタ後:', filteredRanking);
+            
+            return filteredRanking;
         } catch (error) {
             console.warn('共有ランキング取得エラー:', error);
-            return this._getLocalFallback();
+            const fallback = this._getLocalFallback();
+            console.log('フォールバック結果:', fallback);
+            return fallback;
         }
     }
 
