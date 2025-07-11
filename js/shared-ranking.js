@@ -41,13 +41,21 @@ class TrulySharedRanking {
             if (response.ok) {
                 const gist = await response.json();
                 console.log('Gistデータ取得成功');
-                const rankingData = this._extractRankingFromGist(gist);
-                console.log('Gistから抽出したデータ:', rankingData);
+                const gistData = this._extractRankingFromGist(gist);
+                console.log('Gistから抽出したデータ:', gistData);
                 
-                // ローカルキャッシュに保存
-                this._saveToCache(rankingData);
+                // ローカルデータも取得してマージ
+                const localData = this._getLocalCacheRaw();
+                console.log('ローカルデータ:', localData);
                 
-                return rankingData;
+                // Gistとローカルデータをマージしてユニークにする
+                const mergedData = this._mergeRankingData(gistData, localData);
+                console.log('マージ後データ:', mergedData);
+                
+                // マージ結果をローカルキャッシュに保存
+                this._saveToCache(mergedData);
+                
+                return mergedData;
             } else {
                 throw new Error(`GitHub API Error: ${response.status}`);
             }
@@ -165,6 +173,13 @@ class TrulySharedRanking {
      */
     _getLocalCache() {
         console.log('=== _getLocalCache開始 ===');
+        return this._getLocalCacheRaw();
+    }
+
+    /**
+     * ローカルキャッシュを生データで取得（フィルタリング前）
+     */
+    _getLocalCacheRaw() {
         try {
             const cached = localStorage.getItem(this.fallbackKey);
             console.log('ローカルストレージ生データ:', cached);
@@ -191,6 +206,23 @@ class TrulySharedRanking {
             console.warn('キャッシュ取得エラー:', error);
             return [];
         }
+    }
+
+    /**
+     * Gistデータとローカルデータをマージ
+     */
+    _mergeRankingData(gistData, localData) {
+        // 両方のデータを結合
+        const combined = [...gistData, ...localData];
+        
+        // 重複除去（ID基準）
+        const unique = this._removeDuplicates(combined);
+        
+        // スコア順でソート
+        unique.sort((a, b) => a.score - b.score);
+        
+        // 上位10件を返す
+        return unique.slice(0, 10);
     }
 
     /**
