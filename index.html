@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今だ！ゲーム - サクヤの反応速度チャレンジ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 背景は CSS で設定 -->
+        
+        <!-- ゲームタイトル -->
+        <div id="title">
+            <h1>今だ！ゲーム</h1>
+            <p>サクヤの合図を待って、できるだけ素早くクリック！</p>
+        </div>
+
+        <!-- キャラクター表示エリア -->
+        <div id="character-area">
+            <img id="character" src="assets/human01.png" alt="サクヤ">
+        </div>
+
+        <!-- 合図UI（初期は非表示） -->
+        <div id="signal" style="display: none;">
+            <img src="assets/ui.png" alt="今だ！">
+        </div>
+
+        <!-- ゲームエリア（クリック可能領域） -->
+        <div id="game-area" onclick="handleClick()">
+            <div id="instruction">
+                <p>クリックしてゲーム開始</p>
+                <p>合図が出たら素早くクリック！</p>
+            </div>
+        </div>
+
+        <!-- メッセージ表示エリア -->
+        <div id="message-area">
+            <div id="result-message"></div>
+            <div id="name-input-area" style="display: none;">
+                <p>ハイスコア達成！名前を入力してください：</p>
+                <input type="text" id="player-name" maxlength="20" placeholder="名前を入力">
+                <button onclick="submitScore()">登録</button>
+            </div>
+            <button id="share-button" style="display: none;" onclick="shareToX()">
+                結果をXでシェア
+            </button>
+            <button id="retry-button" style="display: none;" onclick="resetGame()">
+                もう一度挑戦
+            </button>
+        </div>
+
+        <!-- ランキング表示 -->
+        <div id="ranking-section">
+            <h3>🏆 ランキングTOP5</h3>
+            <div id="ranking">
+                <p>記録がありません</p>
+            </div>
+            <button id="clear-ranking" onclick="clearRanking()">
+                ランキングをクリア
+            </button>
+        </div>
+
+        <!-- 音量調整 -->
+        <div id="audio-controls">
+            <label for="volume-slider">🔊 音量:</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="50">
+            <button id="mute-button" onclick="toggleMute()">🔇</button>
+        </div>
+
+        <!-- ゲーム説明 -->
+        <div id="instructions">
+            <h4>遊び方</h4>
+            <ul>
+                <li>「クリックしてゲーム開始」をクリック</li>
+                <li>2〜5秒後にサクヤが「今だ！」の合図を出します</li>
+                <li>合図が出たら素早くクリック！</li>
+                <li>フライング（早すぎ）は失敗です</li>
+                <li>反応速度が記録され、TOP5にランクインするかも！</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 音声ファイルをプリロード -->
+    <audio preload="auto">
+        <source src="assets/bgm.mp3" type="audio/mpeg">
+        <source src="assets/cue.mp3" type="audio/mpeg">
+        <source src="assets/click.mp3" type="audio/mpeg">
+        <source src="assets/fail.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
