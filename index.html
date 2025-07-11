@@ -36,6 +36,14 @@
     <link rel="canonical" href="https://yomikakisan.github.io/sakuyagameimada/">
     
     <link rel="stylesheet" href="style.css">
+    
+    <!-- JavaScript モジュール -->
+    <script src="js/config.js"></script>
+    <script src="js/security.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/ranking.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
 </head>
 <body>
     <div id="game-container">
@@ -58,7 +66,7 @@
         </div>
 
         <!-- ゲームエリア（クリック可能領域） -->
-        <div id="game-area" onclick="handleClick()">
+        <div id="game-area">
             <div id="instruction">
                 <p>クリックしてゲーム開始</p>
                 <p>合図が出たら素早くクリック！</p>
@@ -75,12 +83,12 @@
                        title="日本語、英数字、一般的な記号のみ使用できます"
                        autocomplete="off"
                        spellcheck="false">
-                <button onclick="submitScore()">登録</button>
+                <button onclick="window.game.submitScore()">登録</button>
             </div>
-            <button id="share-button" style="display: none;" onclick="shareToX()">
+            <button id="share-button" style="display: none;" onclick="window.game.shareToX()">
                 結果をXでシェア
             </button>
-            <button id="retry-button" style="display: none;" onclick="resetGame()">
+            <button id="retry-button" style="display: none;" onclick="window.game.resetGame()">
                 もう一度挑戦
             </button>
         </div>
@@ -91,7 +99,7 @@
             <div id="ranking">
                 <p>記録がありません</p>
             </div>
-            <button id="clear-ranking" onclick="clearRanking()">
+            <button id="clear-ranking" onclick="window.game.clearRanking()">
                 ランキングをクリア
             </button>
         </div>
@@ -100,7 +108,7 @@
         <div id="audio-controls">
             <label for="volume-slider">🔊 音量:</label>
             <input type="range" id="volume-slider" min="0" max="100" value="50">
-            <button id="mute-button" onclick="toggleMute()">🔇</button>
+            <button id="mute-button" onclick="window.game.toggleMute()">🔇</button>
         </div>
 
         <!-- ゲーム説明 -->
@@ -124,6 +132,27 @@
         <source src="assets/fail.mp3" type="audio/mpeg">
     </audio>
 
-    <script src="script.js"></script>
+    <!-- ゲーム初期化 -->
+    <script>
+        // ページ読み込み完了後にゲーム開始
+        document.addEventListener('DOMContentLoaded', function() {
+            window.game = new Game();
+        });
+
+        // エラーハンドリング
+        window.addEventListener('error', function(event) {
+            console.error('ゲームエラー:', event.error);
+        });
+
+        // デバッグ用（開発時のみ）
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            window.addEventListener('load', function() {
+                if (window.game) {
+                    window.gameDebug = window.game.getDebugInfo();
+                    console.log('デバッグモード有効', window.gameDebug);
+                }
+            });
+        }
+    </script>
 </body>
 </html>

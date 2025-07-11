@@ -17,6 +17,7 @@
 - 🐦 **SNS連携**: 結果をX（旧Twitter）でシェア可能
 - 🔊 **効果音**: Web Audio APIによるリアルタイム効果音
 - 📱 **レスポンシブ**: PC・タブレット・スマホ対応
+- 🔒 **セキュリティ**: XSS対策・入力値検証完備
 
 ## 🎵 効果音
 
@@ -30,20 +31,48 @@
 - **音声**: Web Audio API（音声ファイル不要）
 - **データ保存**: LocalStorage
 - **レスポンシブ**: CSS Media Queries
+- **アーキテクチャ**: モジュラー設計・クラスベース
 
 ## 📂 ファイル構成
 
 ```
-├── index.html          # メインHTMLファイル
-├── style.css           # スタイルシート
-├── script.js           # ゲームロジック
-├── assets/             # ゲーム素材
-│   ├── background.jpg  # 背景画像
-│   ├── human01.png     # サクヤ通常立ち絵
-│   ├── human02.png     # サクヤ合図時立ち絵
-│   └── ui.png          # 「今だ！」合図UI
-└── README.md           # このファイル
+├── index.html              # メインHTMLファイル
+├── style.css               # スタイルシート
+├── js/                     # JavaScriptモジュール
+│   ├── config.js           # 設定・定数定義
+│   ├── security.js         # セキュリティユーティリティ
+│   ├── audio.js            # 音声管理クラス
+│   ├── ranking.js          # ランキング管理クラス
+│   ├── ui.js               # UI管理クラス
+│   └── game.js             # メインゲームクラス
+├── assets/                 # ゲーム素材
+│   ├── background.jpg      # 背景画像
+│   ├── human01.png         # サクヤ通常立ち絵
+│   ├── human02.png         # サクヤ合図時立ち絵
+│   ├── ui.png              # 「今だ！」合図UI
+│   └── ogp-image.png       # OGP画像
+├── .github/workflows/      # GitHub Actions
+│   └── pages.yml           # 自動デプロイ設定
+├── sitemap.xml             # サイトマップ
+├── robots.txt              # クローラー設定
+└── README.md               # このファイル
 ```
+
+## 🏗️ アーキテクチャ
+
+### クラス設計
+
+- **Game**: メインゲームロジック・状態管理
+- **AudioManager**: 音声システム管理
+- **RankingManager**: ランキングデータ管理
+- **UIManager**: UI操作・表示管理
+- **SecurityUtils**: セキュリティ機能
+
+### モジュール分離
+
+- **config.js**: 設定値・定数の一元管理
+- **security.js**: XSS対策・入力検証
+- **各クラス**: 単一責任原則に基づく設計
 
 ## 🎮 操作方法
 
@@ -58,6 +87,14 @@
 - 名前（20文字以内）とタイムスタンプ付き
 - ハイスコア達成時に自動で名前入力画面表示
 - ランキングクリア機能付き
+- 重複登録防止・データ整合性チェック
+
+## 🔒 セキュリティ機能
+
+- **XSS対策**: HTMLエスケープ・危険パターン検出
+- **入力検証**: 文字種制限・文字数制限
+- **データ保護**: JSON解析エラー処理・サイズ制限
+- **重複防止**: 短時間内の同一スコア登録をブロック
 
 ## 📱 対応環境
 
@@ -67,7 +104,30 @@
 
 ## 🚀 デプロイ
 
-GitHub Pagesで簡単にデプロイ可能です。
+GitHub Pagesで自動デプロイ設定済み。
+
+**公開URL**: https://yomikakisan.github.io/sakuyagameimada/
+
+## 🔧 開発者向け
+
+### デバッグモード
+
+ローカル環境では自動でデバッグモードが有効化されます：
+
+```javascript
+// ブラウザコンソールでアクセス可能
+window.gameDebug    // ゲーム状態情報
+window.game         // ゲームインスタンス
+```
+
+### 設定カスタマイズ
+
+`js/config.js` で各種設定を変更可能：
+
+- ゲーム遅延時間
+- ランキング件数
+- 音声周波数
+- セキュリティパターン
 
 ## 📄 ライセンス
 
